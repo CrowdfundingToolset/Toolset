@@ -1,0 +1,859 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+<!-- Hinweis: Folgende Variablen werden von der vars_for_template() Methode in pages.py an diese Seite übergeben, da von hier aus nicht direkt auf diese zugegriffen werden kann:
+
+              - Enable_Backout
+              - Show_Backers
+              - Public_Goods
+              - a_minimum
+              - b_minimum
+              - c_minimum
+              - d_minimum
+              - Project_A_Goal
+              - Project_B_Goal
+              - Project_C_Goal
+              - Project_D_Goal
+              - Refund_Bonus_Boolean
+              - Early_Bird_Bonus_Boolean
+-->
+
+<!-- Titel der Seite -->
+{% block title %}
+    Runde:
+
+    <!-- Falls die aktuelle Runde die Übungsrunde ist: -->
+    {% if round_now == 0 %}
+
+        Übungsrunde
+
+    <!-- Andernfalls -->
+    {% else %}
+
+        <!-- Nummer der aktuellen (gewerteten) Runde + " von " + Gesamtanzahl der gewerteten Runden -->
+        {{ round_now }} von {{ round_max }}
+
+    {% endif %}
+
+
+{% endblock %}
+
+<!-- Inhalt der Seite -->
+{% block content %}
+
+<body>
+
+    <br>
+
+    <!-- Tabelle -->
+    <table class="crowdfunding_table">
+        
+        <!-- Tabellenkopf -->
+        <thead>
+        
+            <!-- Zeile 1 (Kopf): -->
+            <tr>
+                
+                <!-- Spalte 1: -->
+                <th style="text-align:center">
+
+                    Projekt
+
+                </th>
+
+                <!-- Spalte 2:  -->
+                <th style="text-align:center">
+
+                    Status
+
+                </th>
+
+                <!-- Spalte 3: -->
+                <th style="text-align:center">
+
+                    Ziel<br>
+                    erreicht
+
+                </th>
+
+                <!-- Spalte 4: -->
+                <th style="text-align:center">
+
+                    Ihre<br>
+                    Spenden
+
+                </th>
+
+                <!-- Spalte 5: -->
+                <th style="text-align:center">
+
+                    Mögliche<br>
+                    Auszahlung
+
+                </th>
+
+                <!-- Spalte 6: -->
+                <th style="text-align:center">
+
+                    Spenden
+
+                </th>
+
+                <!-- Falls es möglich ist, aus Projekten auszusteigen: -->
+                {% if Enable_Backout %}
+
+                    <!-- Spalte 7: -->
+                    <th style="text-align:center">
+
+                        Aussteigen
+
+                    </th>
+
+                {% endif %}
+
+                <!-- Falls Rückzahlungs-Boni und/oder Early-Bird-Boni aktiviert sind -->
+                {% if Refund_Bonus_Boolean or Early_Bird_Bonus_Boolean %}
+
+                    <!-- Spalte 8: -->
+                    <th style="text-align:center">
+
+                        Boni
+
+                    </th>
+
+                {% endif %}
+
+            </tr>
+
+        </thead>
+
+        <!-- Tabellenkörper -->
+        <tbody>
+
+            <!-- Zeile 2 (Projekt A): -->
+            <tr>
+
+                <!-- Spalte 1 (Projektname): -->
+                <td style="text-align:center">
+
+                    A
+
+                </td>
+
+                <!-- Spalte 2 (Status): -->
+                <td style="text-align:center">
+
+                    <!-- Falls die Anzahl der Unterstützer angezeigt werden soll -->
+                    {% if Show_Backers %}
+
+                        <!-- "Unterstützer: " + Anzahl der Unterstützer von Projekt A  -->
+                        Unterstützer: <span id="a_backers">{{ group.a_backers }}</span><br>
+
+                    {% endif %}
+
+                    <!-- "Stand: " + Summe der Spenden aller Spieler für das Projekt A + "/" + Spendenziel von Projekt A -->
+                    Stand: <span id="a_total">{{ group.a_total }}</span>/{{Project_A_Goal}}<br>
+
+                    <!-- Dient zum Aktualisieren in Echtzeit (siehe liveRecv() Funktion im JavaScript Block unten) -->
+                    <div id="refresh_a_progress">
+
+                        <!-- Grafische Darstellung des Spenden-Fortschritts mit Summe der Spenden aller Spieler für das Projekt A als aktuellen Wert und dem Spendenziel von Projekt A als Maximum -->
+                        <progress value={{group.a_total}} max={{Project_A_Goal}}></progress>
+
+                    </div>
+
+                </td>
+
+                <!-- Spalte 3 (Ziel erreicht): -->
+                <td style="text-align:center">
+
+                    <!-- Dient zum Aktualisieren in Echtzeit (siehe liveRecv() Funktion im JavaScript Block unten) -->
+                    <div id="refresh_a_funded">
+
+                        <p>
+                            <!-- Falls das Spendenziel von Projekt A erreicht ist: -->
+                            {% if group.a_funded %}
+
+                                <br>Ja
+
+                            <!-- Andernfalls (Spendenziel von Projekt A ist nicht erreicht): -->
+                            {% else %}
+
+                                <br>Nein
+
+                            {% endif %}
+
+                        </p>
+
+                    </div>
+
+                </td>
+
+                <!-- Spalte 4 (Ihre Spenden): -->
+                <td style="text-align:center">
+
+                    <!-- Dient zum Aktualisieren in Echtzeit (siehe liveRecv() Funktion im JavaScript Block unten) -->
+                    <div id="refresh_a_contribution">
+
+                        <p>
+                            <!-- Betrag, welchen der Spieler aktuell an das Projekt A spendet -->
+                            <br>{{ player.a_contribution }}
+
+                        </p>
+
+                    </div>
+
+                </td>
+
+                <!-- Spalte 5 (Mögliche Auszahlung): -->
+                <td style="text-align:center">
+
+                    <!-- Mögliche Auszahlung des Spielers für das Projekt A -->
+                    {{ player.a_payoff }}
+
+                    <!-- Falls die Projekte keine öffentlichen Güter sind: -->
+                    {% if Public_Goods == False %}
+
+                        <!-- "Min. Spende: + Minimaler Betrag, welchen der Spieler an das Projekt A spenden muss, um (im Falle des Projekterfolges) seine zugehörige Auszahlung zu erhalten -->
+                        <br>Min. Spende: {{ a_minimum }}
+
+                    {% endif %}
+
+                </td>
+
+                <!-- Spalte 6 (Spenden): -->
+                <td style="text-align:center">
+
+                    <!-- Eingabefeld, um an Projekt A zu spenden -->
+                    <input type="number" id="donate_A" class="form-control">
+
+                    <!-- Spenden-Button, um die Spende an Projekt A abzuschicken
+                         Hinweis: Der Button wird so weit nach links verschoben, dass er auf der Seite nicht sichtbar ist. Die Spende wird per Enter-Taste abgeschickt -->
+                    <button class="donate_A btn btn-success" type="button" style="position: absolute; left: -9999px"/>Spenden</button>
+
+                </td>
+
+                <!-- Falls es möglich sein soll, aus Projekten auszusteigen: -->
+                {% if Enable_Backout %}
+
+                    <!-- Spalte 7 (Aussteigen): -->
+                    <td style="text-align:center">
+
+                        <!-- Aussteigen-Button für das Projekt A -->
+                        <button class="backout_A btn btn-danger" type="button">Aussteigen</button>
+
+                    </td>
+
+                {% endif %}
+
+                <!-- Falls Rückzahlungs-Boni und/oder Early-Bird-Boni aktiviert sind -->
+                {% if Refund_Bonus_Boolean or Early_Bird_Bonus_Boolean %}
+
+                    <!-- Spalte 8 (Boni): -->
+                    <td style="text-align:center">
+
+                        <!-- Dient zum Aktualisieren in Echtzeit (siehe liveRecv() Funktion im JavaScript Block unten) -->
+                        <div id="refresh_a_boni">
+
+                            <p>
+
+                                <!-- Falls Rückzahlungs-Boni aktiviert sind -->
+                                {% if Refund_Bonus_Boolean %}
+
+                                    <!-- "Rückzahlungs-Bonus: " + Rückzahlungs-Bonus des Spielers für Projekt A -->
+                                    <br>Rückzahlungs-Bonus: {{ player.a_refund_bonus }}<br>
+
+                                {% endif %}
+
+                                <!-- Falls Early-Bird-Boni aktiviert sind -->
+                                {% if Early_Bird_Bonus_Boolean %}
+
+                                    <!-- "Early-Bird-Bonus: " + Early-Bird-Bonus des Spielers für Projekt A -->
+                                    Early-Bird-Bonus: {{ player.a_early_bird }}
+
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+                    </td>
+
+                {% endif %}
+
+            </tr>
+
+            <!-- Falls es mehr als ein Projekt gibt: -->
+            {% if Num_Projects > 1 %}
+
+                <!-- Zeile 3 (Projekt B): -->
+                <tr>
+
+                    <!-- Spalte 1 (Projektname): -->
+                    <td style="text-align:center">
+                        B
+                    </td>
+
+                    <!-- Spalte 2 (Status): -->
+                    <td style="text-align:center">
+                        {% if Show_Backers %}
+                            Unterstützer: <span id="b_backers">{{ group.b_backers }}</span><br>
+                        {% endif %}
+                        Stand: <span id="b_total">{{ group.b_total }}</span>/{{Project_B_Goal}}<br>
+                        <div id="refresh_b_progress">
+                            <progress value={{group.b_total}} max={{Project_B_Goal}}></progress>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 3 (Ziel erreicht): -->
+                    <td style="text-align:center">
+                        <div id="refresh_b_funded">
+                            <p>
+                                {% if group.b_funded %}
+                                    <br>Ja
+                                {% else %}
+                                    <br>Nein
+                                {% endif %}
+                            </p>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 4 (Ihre Spenden): -->
+                    <td style="text-align:center">
+                        <div id="refresh_b_contribution">
+                            <p>
+                                <br>{{ player.b_contribution }}
+                            </p>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 5 (Mögliche Auszahlung): -->
+                    <td style="text-align:center">
+                        {{ player.b_payoff }}
+                        {% if Public_Goods == False %}
+                            <br>Min. Spende: {{ b_minimum }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Spalte 6 (Spenden): -->
+                    <td style="text-align:center">
+                        <input type="number" id="donate_B" class="form-control">
+                        <button class="donate_B btn btn-success" type="button" style="position: absolute; left: -9999px"/>Spenden</button>
+                    </td>
+
+                    {% if Enable_Backout %}
+                        <!-- Spalte 7 (Aussteigen): -->
+                        <td style="text-align:center">
+                            <button class="backout_B btn btn-danger" type="button">Aussteigen</button>
+                        </td>
+                    {% endif %}
+
+                    {% if Refund_Bonus_Boolean or Early_Bird_Bonus_Boolean %}
+                        <!-- Spalte 8 (Boni): -->
+                        <td style="text-align:center">
+                            <div id="refresh_b_boni">
+                                <p>
+                                    {% if Refund_Bonus_Boolean %}
+                                        <br>Rückzahlungs-Bonus: {{ player.b_refund_bonus }}<br>
+                                    {% endif %}
+                                    {% if Early_Bird_Bonus_Boolean %}
+                                        Early-Bird-Bonus: {{ player.b_early_bird }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </td>
+                    {% endif %}
+
+                </tr>
+            {% endif %}
+
+            <!-- Falls es mehr als zwei Projekte gibt: -->
+            {% if Num_Projects > 2 %}
+                <!-- Zeile 4 (Projekt C): -->
+                <tr>
+
+                    <!-- Spalte 1 (Projektname): -->
+                    <td style="text-align:center">
+                        C
+                    </td>
+
+                    <!-- Spalte 2 (Status): -->
+                    <td style="text-align:center">
+                        {% if Show_Backers %}
+                            Unterstützer: <span id="c_backers">{{ group.c_backers }}</span><br>
+                        {% endif %}
+                        Stand: <span id="c_total">{{ group.c_total }}</span>/{{Project_C_Goal}}<br>
+                        <div id="refresh_c_progress">
+                            <progress value={{group.c_total}} max={{Project_C_Goal}}></progress>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 3 (Ziel erreicht): -->
+                    <td style="text-align:center">
+                        <div id="refresh_c_funded">
+                            <p>
+                                {% if group.c_funded %}
+                                    <br>Ja
+                                {% else %}
+                                    <br>Nein
+                                {% endif %}
+                            </p>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 4 (Ihre Spenden): -->
+                    <td style="text-align:center">
+                        <div id="refresh_c_contribution">
+                            <p>
+                                <br>{{ player.c_contribution }}
+                            </p>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 5 (Mögliche Auszahlung): -->
+                    <td style="text-align:center">
+                        {{ player.c_payoff }}
+                        {% if Public_Goods == False %}
+                            <br>Min. Spende: {{ c_minimum }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Spalte 6 (Spenden): -->
+                    <td style="text-align:center">
+                        <input type="number" id="donate_C" class="form-control">
+                        <button class="donate_C btn btn-success" type="button" style="position: absolute; left: -9999px"/>Spenden</button>
+                    </td>
+
+                    {% if Enable_Backout %}
+                        <!-- Spalte 7 (Aussteigen): -->
+                        <td style="text-align:center">
+                            <button class="backout_C btn btn-danger" type="button">Aussteigen</button>
+                        </td>
+                    {% endif %}
+
+                    {% if Refund_Bonus_Boolean or Early_Bird_Bonus_Boolean %}
+                        <!-- Spalte 8 (Boni): -->
+                        <td style="text-align:center">
+                            <div id="refresh_c_boni">
+                                <p>
+                                    {% if Refund_Bonus_Boolean %}
+                                        <br>Rückzahlungs-Bonus: {{ player.c_refund_bonus }}<br>
+                                    {% endif %}
+                                    {% if Early_Bird_Bonus_Boolean %}
+                                        Early-Bird-Bonus: {{ player.c_early_bird }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </td>
+                    {% endif %}
+
+                </tr>
+            {% endif %}
+
+            <!-- Falls es mehr als drei Projekte gibt: -->
+            {% if Num_Projects > 3 %}
+                <!-- Zeile 5 (Projekt D): -->
+                <tr>
+
+                    <!-- Spalte 1 (Projektname): -->
+                    <td style="text-align:center">
+                        D
+                    </td>
+
+                    <!-- Spalte 2 (Status): -->
+                    <td style="text-align:center">
+                        {% if Show_Backers %}
+                            Unterstützer: <span id="d_backers">{{ group.d_backers }}</span><br>
+                        {% endif %}
+                        Stand: <span id="d_total">{{ group.d_total }}</span>/{{Project_D_Goal}}<br>
+                        <div id="refresh_d_progress">
+                            <progress value={{group.d_total}} max={{Project_D_Goal}}></progress>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 3 (Ziel erreicht) -->
+                    <td style="text-align:center">
+                        <div id="refresh_d_funded">
+                            <p>
+                                {% if group.d_funded %}
+                                    <br>Ja
+                                {% else %}
+                                    <br>Nein
+                                {% endif %}
+                            </p>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 4 (Ihre Spenden) -->
+                    <td style="text-align:center">
+                        <div id="refresh_d_contribution">
+                            <p>
+                                <br>{{ player.d_contribution }}
+                            </p>
+                        </div>
+                    </td>
+
+                    <!-- Spalte 5 (Mögliche Auszahlung) -->
+                    <td style="text-align:center">
+                        {{ player.d_payoff }}
+                        {% if Public_Goods == False %}
+                            <br>Min. Spende: {{ d_minimum }}
+                        {% endif %}
+                    </td>
+
+                    <!-- Spalte 6 (Spenden) -->
+                    <td style="text-align:center">
+                        <input type="number" id="donate_D" class="form-control">
+                        <button class="donate_D btn btn-success" type="button" style="position: absolute; left: -9999px"/>Spenden</button>
+                    </td>
+
+                    {% if Enable_Backout %}
+                        <!-- Spalte 7 (Aussteigen): -->
+                        <td style="text-align:center">
+                            <button class="backout_D btn btn-danger" type="button">Aussteigen</button>
+                        </td>
+                    {% endif %}
+
+                    {% if Refund_Bonus_Boolean or Early_Bird_Bonus_Boolean %}
+                        <!-- Spalte 8 (Boni): -->
+                        <td style="text-align:center">
+                            <div id="refresh_d_boni">
+                                <p>
+                                    {% if Refund_Bonus_Boolean %}
+                                        <br>Rückzahlungs-Bonus: {{ player.d_refund_bonus }}<br>
+                                    {% endif %}
+                                    {% if Early_Bird_Bonus_Boolean %}
+                                        Early-Bird-Bonus: {{ player.d_early_bird }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </td>
+                    {% endif %}
+
+                </tr>
+            {% endif %}
+        </tbody>
+
+    </table>
+
+    <p></p>
+
+    <!-- "Kapital: " + Aktuelles Kapital des Spielers -->
+    <strong>
+
+        <span style="font-size: x-large">Kapital: </span>
+
+        <!-- Dient zum Aktualisieren in Echtzeit (siehe liveRecv() Funktion im JavaScript Block unten) -->
+        <div id="refresh_money" style="display: inline">
+
+            <span id="money" style="font-size:x-large">{{ player.money }}</span>
+
+        </div>
+
+    </strong>
+
+</body>
+
+{% endblock %}
+
+<!-- CSS Code, welcher das Aussehen der Seite zu bearbeitet -->
+{% block styles %}
+    <style>
+
+         /* Vergrößert die komplette Seite */
+         html {
+             zoom: 1.3;
+         }
+
+         /* Platziert die Texte in der Mitte der Seite */
+         body {
+             text-align:center;
+         }
+
+         /* ---------------------------------------------------------------------
+            Blendet die Debug Info aus, welche von oTree standardmäßig angezeigt wird */
+         .card.debug-info{
+             display: none;
+             visibility: hidden;
+         }
+         .card-body{
+             display: none;
+             visibility: hidden;
+         }
+         .card-header{
+             display: none;
+             visibility: hidden;
+         }
+         /* --------------------------------------------------------------------- */
+
+
+        /* ---------------------------------------------------------------------
+           Definiert das Aussehen der Tabelle */
+        table.crowdfunding_table {
+          font-family: "Arial Black", Gadget, sans-serif;
+          border: 1px solid #1C6EA4;
+          background-color: #EEEEEE;
+          width: 100%;
+          text-align: left;
+          border-collapse: collapse;
+        }
+        table.crowdfunding_table td, table.crowdfunding_table th {
+          border: 1px solid #C7CAD8;
+          padding: 5px 3px;
+        }
+        table.crowdfunding_table tbody td {
+          font-size: 11px;
+        }
+        table.crowdfunding_table tr:nth-child(even) {
+          background: #FFFFFF;
+        }
+        table.crowdfunding_table thead {
+          background: #FFFFFF;
+          background: -moz-linear-gradient(top, #ffffff 0%, #ffffff 66%, #FFFFFF 100%);
+          background: -webkit-linear-gradient(top, #ffffff 0%, #ffffff 66%, #FFFFFF 100%);
+          background: linear-gradient(to bottom, #ffffff 0%, #ffffff 66%, #FFFFFF 100%);
+        }
+        table.crowdfunding_table thead th {
+          font-size: 15px;
+          font-weight: bold;
+        }
+        table.crowdfunding_table tfoot td {
+          font-size: 14px;
+        }
+        table.crowdfunding_table tfoot .links {
+          text-align: right;
+        }
+        table.crowdfunding_table tfoot .links a{
+          display: inline-block;
+          background: #1C6EA4;
+          color: #FFFFFF;
+          padding: 2px 8px;
+          border-radius: 5px;
+        }
+        /* --------------------------------------------------------------------- */
+
+        /* Platziert die Tabelleneinträge in den Mitten der Zellen  */
+        .form-control {
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+    </style>
+
+{% endblock %}
+
+<!-- JavaScript Code, welcher Echtzeitinteraktionen ermöglicht -->
+{% block scripts %}
+    <script>
+
+        // Hinweis: X ∈ [A, B, C, D]
+
+        // JavaScript (jQuery) Variable $donate_X wird deklariert und initialisiert. Sie repräsentiert das Eingabefeld zum Spenden an Projekt X.
+        var $donate_A = $('input#donate_A');
+        var $donate_B = $('input#donate_B');
+        var $donate_C = $('input#donate_C');
+        var $donate_D = $('input#donate_D');
+
+        // JavaScript (jQuery) Variable $btn_donate_X wird deklariert und initialisiert. Sie repräsentiert den Spenden-Button für Projekt X.
+        var $btn_donate_A = $("button.donate_A");
+        var $btn_donate_B = $("button.donate_B");
+        var $btn_donate_C = $("button.donate_C");
+        var $btn_donate_D = $("button.donate_D");
+
+        // JavaScript (jQuery) Variable $btn_backout_X wird deklariert und initialisiert. Sie repräsentiert den Aussteigen-Button für Projekt X.
+        var $btn_backout_A = $("button.backout_A");
+        var $btn_backout_B = $("button.backout_B");
+        var $btn_backout_C = $("button.backout_C");
+        var $btn_backout_D = $("button.backout_D");
+
+
+        // onclick Funktion für den Spenden-Button des Projektes A
+        // Definiert, was passiert, wenn dieser geklickt wird
+        $btn_donate_A.on("click", function() {
+
+            // Wenn der Wert des Eingabefelded ein leerer String ist (Button wurde geklickt, als das Feld leer war)
+            if ($donate_A.val() == "") {
+
+                // Der Wert des Eingabefeldes wird zu 0 geändert
+                $donate_A.val() = 0
+
+            };
+
+            // Methode für Echtzeit-Interaktion
+            // Sendet folgende Informationen an die live_method() Methode in Group Klasse in models.py:
+            liveSend({
+
+                // Information, dass der Spenden-Button des Projektes A geklickt wurde
+                'type': 'donate_A',
+
+                // Information darüber, wie viel der Spieler an das Projekt A spenden möchte (Inhalt des Eingabefeldes)
+                'value': $donate_A.val()
+
+            });
+
+            // Eingabefeld wird geleert
+            $("input#donate_A").val('');
+
+        });
+
+
+        $btn_donate_B.on("click", function() {
+            if ($donate_B.val() == "") {
+                $donate_B.val() = 0
+            };
+            liveSend({
+                'type': 'donate_B',
+                'value': $donate_B.val()
+            });
+            $("input#donate_B").val('');
+        });
+
+
+        $btn_donate_C.on("click", function() {
+            if ($donate_C.val() == "") {
+                $donate_C.val() = 0
+            };
+            liveSend({
+                'type': 'donate_C',
+                'value': $donate_C.val()
+            });
+            $("input#donate_C").val('');
+        });
+
+
+        $btn_donate_D.on("click", function() {
+            if ($donate_D.val() == "") {
+                $donate_D.val() = 0
+            };
+            liveSend({
+                'type': 'donate_D',
+                'value': $donate_D.val()
+            });
+            $("input#donate_D").val('');
+        });
+
+
+        // Sorgt dafür, dass durch Drücken der "Enter"-Taste die im Eingabefeld (des Projektes A) eingegebene Spende abgeschickt wird
+        $donate_A.keydown(function(event) {
+
+            // Falls die "Enter"-Taste gedrückt wird:
+            if (event.keyCode === 13) {
+
+                // Löse die onclick Funktion des Spende-Buttons für das Projekt A aus (Simuliere einen Mausklick)
+                $btn_donate_A.click();
+
+            }
+
+        });
+
+        $donate_B.keydown(function (event) {
+            if (event.keyCode === 13) {
+                $btn_donate_B.click();
+            }
+        });
+        $donate_C.keydown(function (event) {
+            if (event.keyCode === 13) {
+                $btn_donate_C.click();
+            }
+        });
+        $donate_D.keydown(function (event) {
+            if (event.keyCode === 13) {
+                $btn_donate_D.click();
+            }
+        });
+
+
+        // Onclick Funktion für Aussteigen-Button des Projektes A
+        // Definiert, was passiert, wenn dieser geklickt wird
+        $btn_backout_A.on("click", function() {
+
+            // Methode für Echtzeit-Interaktion
+            // Sendet folgende Information an die live_method() Methode in Group Klasse in models.py:
+            liveSend({
+
+                // Information, dass der Aussteigen-Button des Projektes A geklickt wurde
+                'type': 'backout_A'
+
+            });
+
+        });
+
+
+        $btn_backout_B.on("click", function() {
+            liveSend({
+                'type': 'backout_B'
+            });
+        });
+
+
+        $btn_backout_C.on("click", function() {
+            liveSend({
+                'type': 'backout_C'
+            });
+        });
+
+
+        $btn_backout_D.on("click", function() {
+            liveSend({
+                'type': 'backout_D'
+            });
+        });
+
+
+        // Methode für Echtzeit-Interaktion
+        // Empfängt die Daten, welche per live_method() Methode (in der Group Klasse in models.py) gesendet werden
+        // Aktualisiert die folgenden Werte auf der Seite:
+        // Hinweis: x ∈ {a, b, c, d}
+        function liveRecv(payload) {
+
+        // Hinweis: Die folgenden Variablen werden mit Hilfe der empfangenen Daten aktualisiert, da sie für alle Spieler gleich sind
+
+        // x_total: Summe der Spenden aller Spieler für das Projekt X
+        $('span#a_total').html(payload[0]);
+        $('span#b_total').html(payload[1]);
+        $('span#c_total').html(payload[2]);
+        $('span#d_total').html(payload[3]);
+
+        // x_backers: Anzahl der Unterstützer des Projektes X
+        $('span#a_backers').html(payload[4]);
+        $('span#b_backers').html(payload[5]);
+        $('span#c_backers').html(payload[6]);
+        $('span#d_backers').html(payload[7]);
+
+        // -----------------------------------------------------------------------------
+
+        // Hinweis: Die folgenden Variablen werden aktualisiert, indem das entsprechende HTML-Element neu geladen wird.
+
+        // Kapital des Spielers
+        $("#refresh_money").load(location.href+" #refresh_money>*","");
+
+        // x_progress: Grafische Darstellung des Spenden-Fortschritts für das Projekt X
+        $("#refresh_a_progress").load(location.href+" #refresh_a_progress>*","");
+        $("#refresh_b_progress").load(location.href+" #refresh_b_progress>*","");
+        $("#refresh_c_progress").load(location.href+" #refresh_c_progress>*","");
+        $("#refresh_d_progress").load(location.href+" #refresh_d_progress>*","");
+
+        // x_contribution: Betrag, welchen der Spieler aktuell an das Projekt X spendet
+        $("#refresh_a_contribution").load(location.href+" #refresh_a_contribution>*","");
+        $("#refresh_b_contribution").load(location.href+" #refresh_b_contribution>*","");
+        $("#refresh_c_contribution").load(location.href+" #refresh_c_contribution>*","");
+        $("#refresh_d_contribution").load(location.href+" #refresh_d_contribution>*","");
+
+        // x_funded: True, falls Spendenziel von Projekt X erreicht ist. False, falls nicht (Hinweis: Wird für Spieler als "Ja", bzw. "Nein" angezeigt)
+        $("#refresh_a_funded").load(location.href+" #refresh_a_funded>*","");
+        $("#refresh_b_funded").load(location.href+" #refresh_b_funded>*","");
+        $("#refresh_c_funded").load(location.href+" #refresh_c_funded>*","");
+        $("#refresh_d_funded").load(location.href+" #refresh_d_funded>*","");
+
+        // x_refund_bonus: Rückzahlungs-Bonus des Spielers für das Projekt x
+        // x_early_bird: Early-Bird-Bonus des Spielers für das Projekt x
+        $("#refresh_a_boni").load(location.href+" #refresh_a_boni>*","");
+        $("#refresh_b_boni").load(location.href+" #refresh_b_boni>*","");
+        $("#refresh_c_boni").load(location.href+" #refresh_c_boni>*","");
+        $("#refresh_d_boni").load(location.href+" #refresh_d_boni>*","");
+        }
+
+    </script>
+
+{% endblock %}

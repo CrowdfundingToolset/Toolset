@@ -1,0 +1,546 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+<!-- Hinweis: Folgende Variablen werden von der vars_for_template() Methode in pages.py an diese Seite übergeben, da von hier aus nicht direkt auf diese zugegriffen werden kann:
+
+              - a_min_boolean
+              - b_min_boolean
+              - c_min_boolean
+              - d_min_boolean
+              - b_minimum
+              - c_minimum
+              - d_minimum
+              - Public_Goods
+              - All_Or_Nothing
+              - Refund_Bonus_Boolean
+              - Early_Bird_Bonus_Boolean
+              - a_payoff (tatsächlich erreichte Auszahlung/Rückzahlung des Spielers für Projekt A (inklusive Boni))
+              - b_payoff
+              - c_payoff
+              - d_payoff
+-->
+
+<!-- Inhalt der Seite -->
+{% block content %}
+
+    <!-- Tabelle -->
+    <table class="results_table">
+
+        <!-- Tabellenkopf -->
+        <thead>
+
+            <!-- Zeile 1: -->
+            <tr>
+
+                <!-- Spalte 1 (Ohne Inhalt): -->
+                <th class="header">
+
+                </th>
+
+                <!-- Spalte 2: -->
+                <th>
+
+                    Projekt A
+
+                </th>
+
+                <!-- Falls es mehr als ein Projekt gibt: -->
+                {% if Num_Projects > 1 %}
+
+                    <!-- Spalte 3: -->
+                    <th>
+
+                        Projekt B
+
+                    </th>
+
+                {% endif %}
+
+                <!-- Falls es mehr als zwei Projekte gibt: -->
+                {% if Num_Projects > 2 %}
+
+                    <!-- Spalte 4: -->
+                    <th>
+
+                        Projekt C
+
+                    </th>
+
+                {% endif %}
+
+                <!-- Falls es mehr als drei Projekte gibt: -->
+                {% if Num_Projects > 3 %}
+
+                    <!-- Spalte 5: -->
+                    <th>
+
+                        Projekt D
+
+                    </th>
+
+                {% endif %}
+
+            </tr>
+
+        </thead>
+
+        <!-- Tabellenkörper -->
+        <tbody>
+
+            <!-- Zeile 2: -->
+            <tr>
+
+                <!-- Spalte 1 (Dient in dieser Tabelle als zweite Kopfzeile): -->
+                <td class="header">
+
+                    <p><br>Ziel erreicht</p>
+
+                </td>
+
+                <!-- Spalte 2 (Projekt A, Ziel erreicht?):  -->
+                <td>
+                        <!-- Falls Projekt A das Spendenziel erreicht hat -->
+                        {% if group.a_funded %}
+
+                            Ja
+
+                        <!-- Andernfalls (Projekt A hat das Spendenziel nicht erreicht):  -->
+                        {% else %}
+
+                            Nein
+
+                        {% endif %}
+
+                </td>
+
+                {% if Num_Projects > 1 %}
+                    <!-- Spalte 3 (Projekt B, Ziel erreicht?):  -->
+                    <td>
+                            {% if group.b_funded %}
+                                Ja
+                            {% else %}
+                                Nein
+                            {% endif %}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 2 %}
+                    <!-- Spalte 4 (Projekt C, Ziel erreicht?):  -->
+                    <td>
+                            {% if group.c_funded %}
+                                Ja
+                            {% else %}
+                                Nein
+                            {% endif %}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 3 %}
+                    <!-- Spalte 5 (Projekt D, Ziel erreicht?):  -->
+                    <td>
+                            {% if group.d_funded %}
+                                Ja
+                            {% else %}
+                                Nein
+                            {% endif %}
+                    </td>
+                {% endif %}
+
+            </tr>
+
+            <!-- Zeile 3: -->
+            <tr>
+
+                <!-- Spalte 1 (Dient in dieser Tabelle als zweite Kopfzeile): -->
+                <td class="header">
+
+                    <br>Ihre Spende<br>
+
+                    <p></p>
+
+                </td>
+
+                <!-- Spalte 2 (Projekt A, Ihre Spende): -->
+                <td>
+
+                    <!-- Betrag, welchen der Spieler an Projekt A gespendet hat -->
+                    {{ player.a_contribution }}
+
+                </td>
+
+                {% if Num_Projects > 1 %}
+                    <!-- Spalte 3 (Projekt B, Ihre Spende) -->
+                    <td>
+                        {{ player.b_contribution }}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 2 %}
+                    <!-- Spalte 4 (Projekt C, Ihre Spende): -->
+                    <td>
+                        {{ player.c_contribution }}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 3 %}
+                    <!-- Spalte 5 (Projekt D, Ihre Spende): -->
+                    <td>
+                        {{ player.d_contribution }}
+                    </td>
+                {% endif %}
+
+            </tr>
+
+            <!-- Falls die Projekte keine öffentlichen Güter sind: -->
+            {% if Public_Goods == False %}
+
+                <!-- Zeile 4: -->
+                <tr>
+
+                    <!-- Spalte 1 (Dient in dieser Tabelle als zweite Kopfzeile): -->
+                    <td class="header">
+
+                        <p><br>Min. Spende erreicht</p>
+
+                    </td>
+
+                    <!-- Spalte 2 (Projekt A, Min. Spende erreicht?) -->
+                    <td>
+
+                        <!-- Falls der Spieler mindestens den Betrag an das Projekt A gespendet hat, welcher nötig ist,
+                             um (im Falle des Projekterfolges) die zugehörige Auszahlung zu erhalten  -->
+                        {% if a_min_boolean %}
+
+                            Ja
+
+                        <!-- Andernfalls (Minimal benötigte Spende wurde nicht erfüllt):  -->
+                        {% else %}
+
+                            Nein
+
+                        {% endif %}
+
+                    </td>
+
+                    {% if Num_Projects > 1 %}
+                        <!-- Spalte 3 (Projekt B, Min. Spende erreicht?) -->
+                        <td>
+                            {% if b_min_boolean %}
+                                Ja
+                            {% else %}
+                                Nein
+                            {% endif %}
+                        </td>
+                    {% endif %}
+
+                    {% if Num_Projects > 2 %}
+                        <!-- Spalte 4 (Projekt C, Min. Spende erreicht?) -->
+                        <td>
+                            {% if c_min_boolean %}
+                                Ja
+                            {% else %}
+                                Nein
+                            {% endif %}
+                        </td>
+                    {% endif %}
+
+                    {% if Num_Projects > 3 %}
+                        <!-- Spalte 5 (Projekt D, Min. Spende erreicht?) -->
+                        <td>
+                            {% if d_min_boolean %}
+                                Ja
+                            {% else %}
+                                Nein
+                            {% endif %}
+                        </td>
+                    {% endif %}
+
+                </tr>
+
+            {% endif %}
+
+            <!-- Zeile 4 bzw. 5: -->
+            <tr>
+
+                <!-- Spalte 1 (Dient in dieser Tabelle als zweite Kopfzeile): -->
+                <td class="header">
+
+                    <p><br>Mögliche Auszahlung</p>
+
+                </td>
+
+                <!-- Spalte 2 (Projekt A, Mögliche Auszahlung) -->
+                <td>
+
+                    <!-- Mögliche Auszahlung des Spieler für das Projekt A (ohne Early-Bird-Bonus)-->
+                    {{ player.a_payoff }}
+
+                </td>
+
+                {% if Num_Projects > 1 %}
+                    <!-- Spalte 3 (Projekt B, Mögliche Auszahlung) -->
+                    <td>
+                        {{ player.b_payoff }}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 2 %}
+                    <!-- Spalte 4 (Projekt C, Mögliche Auszahlung) -->
+                    <td>
+                        {{ player.c_payoff }}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 3 %}
+                    <!-- Spalte 5 (Projekt D, Mögliche Auszahlung) -->
+                    <td>
+                        {{ player.d_payoff }}
+                    </td>
+                {% endif %}
+
+            </tr>
+
+            <!-- Falls Rückzahlungs-Boni aktiviert sind: -->
+            {% if Refund_Bonus_Boolean %}
+
+                <!-- Zeile 5 bzw. 6: -->
+                <tr>
+
+                    <!-- Spalte 1 (Dient in dieser Tabelle als zweite Kopfzeile): -->
+                    <td class="header">
+
+                        <p><br>Rückzahlungs-Bonus</p>
+
+                    </td>
+
+                    <!-- Spalte 2 (Projekt A, Rückzahlungs-Bonus) -->
+                    <td>
+
+                        <!-- Rückzahlungs-Bonus, welchen der Spieler für das Projekt A erhält -->
+                        {{ player.a_refund_bonus }}
+
+                    </td>
+
+                    {% if Num_Projects > 1 %}
+                        <!-- Spalte 3 (Projekt B, Rückzahlungs-Bonus) -->
+                        <td>
+                            {{ player.b_refund_bonus }}
+                        </td>
+                    {% endif %}
+
+                    {% if Num_Projects > 2 %}
+                        <!-- Spalte 4 (Projekt C, Rückzahlungs-Bonus) -->
+                        <td>
+                            {{ player.c_refund_bonus }}
+                        </td>
+                    {% endif %}
+
+                    {% if Num_Projects > 3 %}
+                        <!-- Spalte 5 (Projekt D, Rückzahlungs-Bonus) -->
+                        <td>
+                            {{ player.d_refund_bonus }}
+                        </td>
+                    {% endif %}
+
+                </tr>
+
+            {% endif %}
+
+            <!-- Falls Rückzahlungs-Boni aktiviert sind: -->
+            {% if Early_Bird_Bonus_Boolean %}
+
+                <!-- Zeile 5 bzw. 6 bzw. 7: -->
+                <tr>
+
+                    <!-- Spalte 1 (Dient in dieser Tabelle als zweite Kopfzeile): -->
+                    <td class="header">
+
+                        <p><br>Early-Bird-Bonus</p>
+
+                    </td>
+
+                    <!-- Spalte 2 (Projekt A, Early-Bird-Bonus) -->
+                    <td>
+
+                        <!-- Rückzahlungs-Bonus, welchen der Spieler für das Projekt A erhält -->
+                        {{ player.a_early_bird }}
+
+                    </td>
+
+                    {% if Num_Projects > 1 %}
+                        <!-- Spalte 3 (Projekt B, Early-Bird-Bonus) -->
+                        <td>
+                            {{ player.b_early_bird }}
+                        </td>
+                    {% endif %}
+
+                    {% if Num_Projects > 2 %}
+                        <!-- Spalte 4 (Projekt C, Early-Bird-Bonus) -->
+                        <td>
+                            {{ player.c_early_bird }}
+                        </td>
+                    {% endif %}
+
+                    {% if Num_Projects > 3 %}
+                        <!-- Spalte 5 (Projekt D, Early-Bird-Bonus) -->
+                        <td>
+                            {{ player.d_early_bird }}
+                        </td>
+                    {% endif %}
+
+                </tr>
+
+            {% endif %}
+
+        </tbody>
+
+        <!-- Fußbereich der Tabelle -->
+        <tfoot>
+
+            <!-- Zeile 5 bzw. 6 bzw. 7 bzw. 8: -->
+            <tr>
+
+                <!-- Spalte 1 (Dient in dieser Tabelle als zweite Kopfzeile): -->
+                <td class="header">
+
+                    <p><br>Auszahlung/Rückzahlung</p>
+
+                </td>
+
+                <!-- Spalte 2 (Projekt A, Auszahlung/Rückzahlung): -->
+                <td>
+
+                    <!-- Auszahlung/Rückzahlung des Spielers für das Projekt A -->
+                    {{ a_payoff }}
+
+                </td>
+
+                {% if Num_Projects > 1 %}
+                    <!-- Spalte 3 (Projekt B, Auszahlung/Rückzahlung): -->
+                    <td>
+                        {{ b_payoff }}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 2 %}
+                    <!-- Spalte 4 (Projekt C, Auszahlung/Rückzahlung): -->
+                    <td>
+                        {{ c_payoff }}
+                    </td>
+                {% endif %}
+
+                {% if Num_Projects > 3 %}
+                    <!-- Spalte 5 (Projekt D, Auszahlung/Rückzahlung): -->
+                    <td>
+                        {{ d_payoff }}
+                    </td>
+                {% endif %}
+
+            </tr>
+
+        </tfoot>
+
+    </table>
+
+    <p></p>
+
+    <!-- "Restliches Kapital: " + Kapital des Spielers -->
+    <h3>Restliches Kapital: {{ player.money }} Punkte</h3>
+
+    <p></p>
+
+    <!-- "Auszahlung der aktuellen Runde: " + Auszahlung des Spielers in der aktuellen Runde -->
+    <h3>Auszahlung der aktuellen Runde: {{ player.payoff }}</h3>
+
+    <p></p>
+
+    <!-- Button, um auf nächste Seite zu gelangen -->
+    {% next_button %}
+
+{% endblock %}
+
+<!-- CSS Code, welcher das Aussehen der Seite zu bearbeitet -->
+{% block styles %}
+    <style>
+
+        /* Platziert die Texte in der Mitte der Seite */
+        body {
+            text-align:center;
+        }
+
+        /* ---------------------------------------------------------------------
+           Blendet die Debug Info aus, welche von oTree standardmäßig angezeigt wird */
+        .card.debug-info{
+            display: none;
+            visibility: hidden;
+        }
+
+        .card-body{
+            display: none;
+            visibility: hidden;
+        }
+
+        .card-header{
+            display: none;
+            visibility: hidden;
+        }
+        /* --------------------------------------------------------------------- */
+
+        /* ---------------------------------------------------------------------
+           Definiert das Aussehen der Tabelle */
+        table.results_table {
+            border: 3px solid #000000;
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+        table.results_table th.header {
+            background: #FFFFFF;
+            border-right: 3px solid #000000;
+        }
+        table.results_table td.header {
+            font-size: 15px;
+            font-weight: bold;
+            color: #000000;
+            background: #CFCFCF;
+            background: -moz-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+            background: -webkit-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+            background: linear-gradient(to bottom, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+            border-right: 3px solid #000000;
+        }
+        table.results_table td, table.results_table th {
+            border: 1px solid #000000;
+            padding: 5px 4px;
+            text-align: center;
+        }
+        table.results_table tbody td {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        table.results_table thead {
+            background: #CFCFCF;
+            background: -moz-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+            background: -webkit-linear-gradient(top, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+            background: linear-gradient(to bottom, #dbdbdb 0%, #d3d3d3 66%, #CFCFCF 100%);
+            border-bottom: 3px solid #000000;
+        }
+        table.results_table thead th {
+            font-size: 15px;
+            font-weight: bold;
+            color: #000000;
+            text-align: center;
+        }
+        table.results_table tfoot {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            border-top: 3px solid #000000;
+        }
+        table.results_table tfoot td {
+            font-size: 14px;
+        }
+        /* --------------------------------------------------------------------- */
+
+    </style>
+
+{% endblock %}
