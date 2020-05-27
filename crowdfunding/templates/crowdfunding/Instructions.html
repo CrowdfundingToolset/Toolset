@@ -1,0 +1,203 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+<!-- Hinweis: Folgende Variablen werden von der vars_for_template() Methode in pages.py an diese Seite übergeben, da von hier aus nicht direkt auf diese zugegriffen werden kann:
+
+              - Enable_Backout
+              - Backout_Fees
+              - Show_Backers
+              - Public_Goods
+              - Refund_Bonus_Boolean
+              - Early_Bird_Bonus_Boolean
+              - Refund_Bonus_Percentage
+              - Early_Bird_Bonus_Percentage
+              - All_Or_Nothing
+              - Round_Duration
+              - Bonus_Duration
+              - Num_Projects
+              - Players
+              - Cent_Per_Point
+              - Participation_Fee
+-->
+
+<!-- Titel der Seite -->
+{% block title %}
+    Instruktionen
+{% endblock %}
+
+<!-- Inhalt der Seite -->
+{% block content %}
+    <p>Willkommen zum Experiment! Bitte sprechen Sie ab jetzt nicht mehr mit den anderen Teilnehmern.</p>
+
+    <p>
+        Im Experiment werden Sie einfache Entscheidungen am Computer treffen. Alle Entscheidungen bleiben
+        anonym. Das heißt, Sie erfahren die Identität der anderen Teilnehmer nicht und kein Teilnehmer
+        erfährt Ihre Identität. Ihre Auszahlung hängt von Ihren Entscheidungen sowie den Entscheidungen
+        der anderen Teilnehmer ab. Sämtliche Geldangaben innerhalb des Experiments werden in Punkten angegeben.
+        Bitte lesen Sie die Instruktionen sorgfältig durch. Falls Sie etwas nicht verstehen, zeigen Sie dies
+        bitte per Handzeichen an. Wir werden dann zu Ihnen kommen und Ihre Fragen privat beantworten.
+        Im Folgenden finden Sie die Instruktionen für das Experiment. Diese sind für alle Teilnehmer des Experiments identisch.
+    </p>
+
+    <h2>Ihre Aufgabe</h2>
+
+    <p>
+        Sie werden zusammen mit {{ Players }} zufällig ausgewählten Mitspielern eine Gruppe bilden. Sie und Ihre Mitspieler
+        nehmen hierbei die Rolle von Nutzern einer Crowdfunding-Website ein. Zu Beginn einer jeder Runde erhält jeder
+        von Ihnen ein Startkapital von {{ player.money }} Punkten. Diese Punkte können Sie verwenden, um an {{ Num_Projects }} verschiedene
+        Projekte zu spenden. Um eine Spende zu tätigen, geben Sie den gewünschten Betrag in eines der Eingabefelder
+        ein und bestätigen die Eingabe durch Drücken der "Enter"-Taste auf Ihrer Tastatur.
+    </p>
+
+    <!-- Falls die Projekte öffentliche Güter sind: -->
+    {% if Public_Goods %}
+        <p>
+            Die Projekte haben individuelle Spendenziele. Für jedes Projekt, das am Ende einer Runde
+            das zugehörige Spendenziel erreicht hat, erhalten Sie eine Auszahlung. Die Höhe der möglichen Auszahlung
+            ist von Spieler zu Spieler unterschiedlich. Ihre persönlichen Werte werden Ihnen auf der Crowdfunding-Seite angezeigt.
+            Die möglichen Auszahlungen Ihrer Mitspieler kennen Sie nicht.
+
+            <!-- Falls Early-Bird-Boni aktiviert sind: -->
+            {% if Early_Bird_Bonus_Boolean %}
+                Zusätzlich erhalten Sie einen Early-Bird-Bonus von {{ Early_Bird_Bonus_Percentage}}% auf alle Beträge,
+                die Sie innerhalb der ersten {{ Bonus_Duration }} Sekunden nach Rundenbeginn an Projekte gespendet haben,
+                deren Spendenziele am Ende der Runde erreicht sind.
+            {% endif %}
+
+    <!-- Andernfalls (Projekte sind keine öffentlichen Güter): -->
+    {% else %}
+        <p>
+            Die Projekte haben unterschiedlich hohe Spendenziele. Für jedes Projekt, das am Ende einer Runde
+            das zugehörige Spendenziel erreicht hat, erhalten Sie eine Auszahlung, sofern Sie einen Mindestbetrag
+            an das Projekt gespendet haben. Dieser Mindestbetrag ist für alle Spieler gleich hoch und wird Ihnen
+            auf der Crowdfunding-Seite angezeigt. Die Höhe der möglichen Auszahlung ist von Spieler zu Spieler unterschiedlich.
+            Ihre persönlichen Werte werden Ihnen auf der Crowdfunding-Seite angezeigt. Die möglichen Auszahlungen
+            Ihrer Mitspieler kennen Sie nicht.
+
+            <!-- Falls Early-Bird-Boni aktiviert sind: -->
+            {% if Early_Bird_Bonus_Boolean %}
+                Zusätzlich erhalten Sie einen Early-Bird-Bonus von {{ Early_Bird_Bonus_Percentage}}% auf alle Beträge,
+                die Sie innerhalb der ersten {{ Bonus_Duration }} Sekunden nach Rundenbeginn an Projekte gespendet haben,
+                deren Spendenziele am Ende der Runde erreicht sind. Hierfür gilt ebenfalls die Bedingung, dass sie die
+                entsprechenden Mindestbeträge gespendet haben.
+            {% endif %}
+        </p>
+    {% endif %}
+
+    <!-- Falls die "Alles oder Nichts"-Regel aktiviert ist und Rückzahlungs-Boni deaktiviert sind: -->
+    {% if All_Or_Nothing == True and Refund_Bonus_Boolean == False %}
+        <p>
+            Falls das Ziel eines Projektes zum Ende einer Runde nicht erreicht sein sollte, erhalten Sie die Punkte,
+            die Sie an das Projekt gespendet haben, zurück.
+        </p>
+
+    <!-- Falls stattdessen die "Alles oder Nichts"-Regel aktiviert ist und Rückzahlungs-Boni aktiviert sind: -->
+    {% elif All_Or_Nothing and Refund_Bonus_Boolean %}
+        <p>
+            Falls das Ziel eines Projektes zum Ende einer Runde nicht erreicht sein sollte,
+            erhalten Sie die Punkte, die Sie an das Projekt gespendet haben, zurück.
+            Zusätzlich erhalten Sie einen Rückzahlungs-Bonus in Höhe von {{ Refund_Bonus_Percentage}}%
+            auf den Teil dieser Punkte, den sie innerhalb der ersten {{ Bonus_Duration }} Sekunden nach Rundenbeginn
+            gespendet haben.
+        </p>
+    {% endif %}
+
+    <!-- Falls es möglich sein soll, aus Projekten auszusteigen: -->
+    {% if Enable_Backout %}
+        <p>
+            Sie haben jederzeit die Möglichkeit, aus Projekten auszusteigen. Falls Sie aus einem Projekt aussteigen,
+            erhalten Sie die Summe Ihrer Spenden an das Projekt zurück. Klicken Sie hierfür auf den entsprechenden "Aussteigen"-Button.
+
+            <!-- Falls Rückzahlungs-Boni oder Early-Bird-Boni aktiviert sind: -->
+            {% if Refund_Bonus_Boolean or Early_Bird_Bonus_Boolean %}
+                Beachten Sie, dass durch den Ausstieg aus einem Projekt Ihre zugehörigen Boni auf 0 zurückgesetzt werden.
+            {% endif %}
+
+            <!-- Falls die Ausstiegskosten größer als 0 sind: -->
+            {% if Backout_Fees > 0 %}
+                Für jeden Ausstieg wird Ihnen eine Gebühr von {{ Backout_Fees }}
+                Punkten von Ihrem Kapital abgezogen.
+            {% endif %}
+        </p>
+    {% endif %}
+
+    <p>
+        Während einer Runde wird Ihnen für jedes der Projekte stets der Spendenstand
+
+        <!-- Falls die Anzahl an Unterstützern angezeigt werden soll: -->
+        {% if Show_Backers %}
+             sowie die Anzahl der Unterstützer
+        {% endif %}
+
+        angezeigt.
+    </p>
+
+    <h2>Dauer und Aufbau des Experiments</h2>
+
+    <p>
+        Eine Crowdfunding-Runde dauert {{ Round_Duration }} Sekunden. Nach jeder Runde sehen Sie, die Auszahlung Sie erreicht haben.
+        Diese berechnet sich aus der Summe Ihres restlichen Kapitals
+
+        <!-- Falls Rückzahlungs-Boni oder Early-Bird-Boni aktiviert sind: -->
+        {% if Refund_Bonus_Boolean or Early_Bird_Bonus_Boolean %}
+            , Ihren Auszahlungen für erfolgreiche Projekte sowie Ihren erreichten Boni.
+
+        <!-- Anderfalls (Beide Arten von Boni sind deaktiviert): -->
+        {% else %}
+            und Ihren Auszahlungen für erfolgreiche Projekte.
+        {% endif %}
+
+        Insgesamt besteht das Experiment aus {{ Constants.num_rounds }} Runden, wobei die erste Runde eine Übungsrunde darstellt, deren
+        Ergebnisse nicht gewertet werden. In jeder Runde werden Ihnen neue mögliche Auszahlungen für die Projekte
+        zugewiesen. Die Verteilung ist so reguliert, dass jeder Spieler jedes Set an Auszahlungen genauso oft zugeteilt bekommt, wie seine
+        Mitspieler. Hierdurch wird Chancengleichheit bezüglich der zu erreichenden Gesamtauszahlung garantiert.
+    </p>
+
+    <h2>Verdienste im Experiment</h2>
+
+    <p>
+        Am Ende des Experiments wird Ihre Gesamtauszahlung als Summe der Auszahlungen aus den einzelnen Runden berechnet.
+        Für jeden erreichten Punkt erhalten Sie anschließend {{ Cent_Per_Point }} Eurocent, zuzüglich einer Teilnahmevergütung
+        in Höhe von {{ Participation_Fee }}, ausgezahlt.
+    </p>
+
+    <p>
+        Klicken Sie auf den "Weiter"-Button, um mit dem Experiment zu beginnen.
+    </p>
+
+    <p></p>
+
+<!-- Button, um auf nächste Seite zu gelangen -->
+{% next_button %}
+
+{% endblock %}
+
+<!-- CSS Code, der das Aussehen der Seite zu bearbeitet -->
+{% block styles %}
+    <style>
+
+        /* Richtet Text im Blocksatz aus */
+        body {
+             text-align:justify;
+         }
+
+         /* ---------------------------------------------------------------------
+            Blendet die Debug Info aus, die von oTree standardmäßig angezeigt wird */
+         .card.debug-info{
+             display: none;
+             visibility: hidden;
+         }
+         .card-body{
+             display: none;
+             visibility: hidden;
+         }
+         .card-header{
+             display: none;
+             visibility: hidden;
+         }
+         /* --------------------------------------------------------------------- */
+
+     </style>
+
+{% endblock %}
+
